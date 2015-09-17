@@ -1,0 +1,150 @@
+<div class="ms-PersonaCard">
+{{#persona}}
+  <div class="ms-PersonaCard-persona">
+    <div class="ms-Persona">
+      <div class="ms-Persona-imageArea">
+        <div class="ms-Persona-imageCircle">
+          <i class="ms-Persona-placeholder ms-Icon ms-Icon--person"></i>
+          <img class="ms-Persona-image" src={{imageMedium}}>
+        </div>
+        <div class="ms-Persona-presence"></div>
+      </div>
+      <div class="ms-Persona-details">
+        <!-- Use title attribute to display full text in the event of primaryText truncation -->
+        <div class="ms-Persona-primaryText" title="Alton Lafferty">{{primaryText}}</div>
+        <div class="ms-Persona-secondaryText">{{secondaryText}}</div>
+        <div class="ms-Persona-tertiaryText">{{tertiaryText}}</div>
+        <div class="ms-Persona-optionalText">{{optionalText}}</div>
+      </div>
+    </div>
+  </div>
+  <ul class="ms-PersonaCard-actions">
+    <li id="chat" class="ms-PersonaCard-action is-active"><i class="ms-Icon ms-Icon--chat"></i></li>
+    <li id="phone" class="ms-PersonaCard-action"><i class="ms-Icon ms-Icon--phone"></i></li>
+    <li id="video" class="ms-PersonaCard-action"><i class="ms-Icon ms-Icon--video"></i></li>
+    <li id="mail" class="ms-PersonaCard-action"><i class="ms-Icon ms-Icon--mail"></i></li>
+    <li class="ms-PersonaCard-overflow" alt="View profile in Delve" title="View profile in Delve">View profile</li>
+    <li id="org" class="ms-PersonaCard-action ms-PersonaCard-orgChart"><i class="ms-Icon ms-Icon--org"></i></li>
+  </ul>
+  <div class="ms-PersonaCard-actionDetailBox">
+    <ul id="detailList" class="ms-PersonaCard-detailChat">
+      <li id="chat" class="ms-PersonaCard-actionDetails detail-1">
+        <div class="ms-PersonaCard-detailLine"><span class="ms-PersonaCard-detailLabel">Lync:</span> <a class="ms-Link" href="#">Start Lync call</a></div>
+      </li>
+      <li id="phone" class="ms-PersonaCard-actionDetails detail-2">
+        <div class="ms-PersonaCard-detailLine"><span class="ms-PersonaCard-detailLabel">Personal:</span> {{phonePersonal}}</div>
+        <div class="ms-PersonaCard-detailLine"><span class="ms-PersonaCard-detailLabel">Work:</span> {{phoneWork}}</div>
+      </li>
+      <li id="video" class="ms-PersonaCard-actionDetails detail-3">
+        <div class="ms-PersonaCard-detailLine"><span class="ms-PersonaCard-detailLabel">Skype:</span> <a class="ms-Link" href="#">Start Skype call</a></div>
+      </li>
+      <li id="mail" class="ms-PersonaCard-actionDetails detail-4">
+        <div class="ms-PersonaCard-detailLine"><span class="ms-PersonaCard-detailLabel">Personal:</span> <a class="ms-Link" href="mailto:{{emailPersonal}}">{{emailPersonal}}</a></div>
+        <div class="ms-PersonaCard-detailLine"><span class="ms-PersonaCard-detailLabel">Work:</span> <a class="ms-Link" href="mailto:{{emailWork}}">{{emailWork}}</a>
+      </li>
+      <!-- org chart -->
+      <li id="org" class="ms-PersonaCard-actionDetails detail-5">
+        <div class="ms-OrgChart">
+          <div class="ms-OrgChart-group">
+            <ul class="ms-OrgChart-list">
+            {{#orgChartList}}
+                 {{>item}}
+            {{/orgChartList}}
+            </ul>
+          </div>
+        </div>
+      </li>
+      <!-- /org chart -->
+    </ul>
+  </div>
+  {{/}}
+</div>
+
+<!-- RactiveJS Partial Template -->
+{{#partial item}}
+<li class="ms-OrgChart-listItem">
+<button class="ms-OrgChart-listItemBtn">
+  <div class="ms-Persona">
+    <div class="ms-Persona-imageArea">
+      <div class="ms-Persona-imageCircle">
+        <i class="ms-Persona-placeholder ms-Icon ms-Icon--person"></i>
+        <img class="ms-Persona-image" src={{imageMedium}}>
+      </div>
+      <div class="ms-Persona-presence"></div>
+    </div>
+    <div class="ms-Persona-details">
+      <div class="ms-Persona-primaryText">{{primaryText}}</div>
+      <div class="ms-Persona-secondaryText">{{secondaryText}}</div>
+    </div>
+  </div>
+</button>
+</li>
+{{/item}}
+
+<script>
+var $           = require('jquery');
+var domReady    = require('domready');
+var log         = require('bows')('VisitCard');
+var DataService = require('data-service');
+var models      = require('persona');
+
+component.exports = {
+  isolated: false,
+  adapt: ['Ampersand'],
+  data: function(){
+    return {
+      persona: new models.PersonaModel()
+    };
+  },
+  onrender: function(){
+    var self = this;
+    domReady(function() {
+       if ($.fn.NavBar) {
+         $('.ms-PersonaCard').PersonaCard();
+       }
+       self.ds = new DataService({});
+       self.ds.getUserInfo().then(function(result){
+            self.set('persona', self.extractInfo(result.results[0].user));
+        }).catch(function(err){
+            log(err);
+       });
+       log('rendered');
+     });
+  },
+  oncomplete: function(){
+    log('completed');
+  },
+  onteardown: function(){
+    log('removed');
+  },
+  extractInfo: function(user){
+    if(!user)return;
+    var first = this.capitalizeString(user.name.first);
+    var last = this.capitalizeString(user.name.last);
+    var collection = new models.PersonaCollection(this.ds.getOrgChartData());
+    var info = {
+      firstName     : first,
+      lastName      : last,
+      primaryText   : first + ' ' + last,
+      secondaryText : 'Software Engineer, RactiveJS Corp.',
+      tertiaryText  : 'Office: 23/1999',
+      optionalText  : ' ',
+      phonePersonal : '555-123-456',
+      phoneWork     : '444-23-567',
+      emailPersonal : user.email,
+      emailWork     : user.name.first + '@ractivejs.org',
+      lyncAccount   : user.name.first + '@lync.com',
+      skypeAccount  : user.name.first + '@skype.com',
+      imageSmall    : user.picture.thumbnail,
+      imageMedium   : user.picture.medium,
+      imageBig      : user.picture.large,
+      orgChartList  : collection
+    };
+    return info;
+  },
+  capitalizeString: function(string){
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+};
+
+</script>
